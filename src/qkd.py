@@ -1,6 +1,10 @@
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, execute, BasicAer, Aer, transpile, assemble
 from qiskit.tools.visualization import plot_histogram
 
+from Crypto.Hash import Poly1305
+from Crypto.Cipher import AES
+from binascii import unhexlify
+
 import numpy as np
 from numpy.random import randint
 import panel as pn
@@ -35,19 +39,19 @@ def generate_key(event=None):
     keys.append(bit_key)
     bases.append(bit_basis)
     
-#     if select_auth.value == 'Poly1305':
-#         secret = b'Thirtytwo very very secret bytes'
+    if select_auth.value == 'Poly1305':
+        secret = b'Thirtytwo very very secret bytes'
 
-#         mac = Poly1305.new(key=secret, cipher=AES)
-#         mac.update(b'Hello')
-#         print("Nonce: ", mac.nonce.hex())
-#         print("MAC:   ", mac.hexdigest())
+        mac = Poly1305.new(key=secret, cipher=AES)
+        mac.update(b'Hello')
+        print("Nonce: ", mac.nonce.hex())
+        print("MAC:   ", mac.hexdigest())
 
-#         time.sleep(0.25)
-#         terminal.write("Nonce: " + str(mac.nonce.hex()) + "\n")
-#         time.sleep(0.25)
-#         terminal.write("MAC:   " + str(mac.hexdigest()) + "\n")
-#         time.sleep(0.25)
+        time.sleep(0.25)
+        terminal.write("Nonce: " + str(mac.nonce.hex()) + "\n")
+        time.sleep(0.25)
+        terminal.write("MAC:   " + str(mac.hexdigest()) + "\n")
+        time.sleep(0.25)
     
     
     
@@ -229,7 +233,7 @@ def measure_qubits(event=None):
         measure_terminal.write("\nThe message or the key is wrong. Terminating ")
         for i in range(3):
             time.sleep(0.25)
-            terminal.write(".")
+            measure_terminal.write(".")
         
         measure_terminal.write("\nSession ended.")
         
