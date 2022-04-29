@@ -35,6 +35,22 @@ def generate_key(event=None):
     keys.append(bit_key)
     bases.append(bit_basis)
     
+#     if select_auth.value == 'Poly1305':
+#         secret = b'Thirtytwo very very secret bytes'
+
+#         mac = Poly1305.new(key=secret, cipher=AES)
+#         mac.update(b'Hello')
+#         print("Nonce: ", mac.nonce.hex())
+#         print("MAC:   ", mac.hexdigest())
+
+#         time.sleep(0.25)
+#         terminal.write("Nonce: " + str(mac.nonce.hex()) + "\n")
+#         time.sleep(0.25)
+#         terminal.write("MAC:   " + str(mac.hexdigest()) + "\n")
+#         time.sleep(0.25)
+    
+    
+    
     terminal.write("\nGenerating " + str(n) + "-qubit key and basis ")
     for i in range(3):
         time.sleep(0.25)
@@ -157,6 +173,30 @@ def measure_qubits(event=None):
             temp_sim_results = temp_aer_sim.run(temp_qobj).result()
             temp_measured_bit = int(temp_sim_results.get_memory()[0])
             temp_results.append(temp_measured_bit)
+            
+    secret = b'Thirtytwo very very secret bytes'
+
+    mac = Poly1305.new(key=secret, cipher=AES)
+    mac.update(b'Hello')
+    print("Nonce: ", mac.nonce.hex())
+    print("MAC:   ", mac.hexdigest())
+    
+    passed = False
+    msg_ = b"I am Alice."
+    
+    nonce_hex = mac.nonce.hex()
+    mac_tag_hex = mac.hexdigest()
+
+    secret = b'Thirtytwo very very secret bytes'
+    nonce = unhexlify(nonce_hex)
+    mac = Poly1305.new(key=secret, nonce=nonce, cipher=AES, data=msg_)
+    try:
+        mac.hexverify(mac_tag_hex)
+        print("\nThe message '%s' is authentic" % msg_)
+        passed = True
+    except ValueError:
+        print("\nThe message or the key is wrong")
+        passed = False
          
     backend = Aer.get_backend("aer_simulator")
     results = []
@@ -179,14 +219,33 @@ def measure_qubits(event=None):
         
     bob_results.append(results)
     
-    measure_terminal.write("\nGenerated Key: "+ str(results))
+    
+    if passed == True:
+        alice_msg = str("\nThe message is authentic.")
+        measure_terminal.write(alice_msg + "\n")
+        measure_terminal.write("\nGenerated Key: "+ str(results))
+    
+    else:
+        measure_terminal.write("\nThe message or the key is wrong. Terminating ")
+        for i in range(3):
+            time.sleep(0.25)
+            terminal.write(".")
+        
+        measure_terminal.write("\nSession ended.")
+        
 
 
-measure_button.on_click(measure_qubits)  
+measure_button.on_click(measure_qubits) 
+
+select_auth = pn.widgets.Select(name="Authentication Protocol", options=["Poly1305", "AES", "ZKP"])
+
+pre_shared = pn.widgets.TextInput(name="Pre-Shared Key", value='Thirty two very very secret bytes')
+
+auth_input = pn.widgets.TextInput(name="Authentication Tag", value='Thirty two very very secret bytes')
 
 dashboard = pn.Row(
-    pn.WidgetBox(n_bits, decoherence, displacement, receiver, generate_button, clear_terminal, send_button, height=350),
+    pn.WidgetBox(pre_shared, n_bits, decoherence, displacement, receiver, select_auth, generate_button, clear_terminal, send_button, height=500),
     terminal
 )
 
-measurement = pn.Row(pn.WidgetBox(measure_button, height=100), measure_terminal)
+measurement = pn.Row(pn.WidgetBox(auth_input, measure_button, height=120), measure_terminal)
